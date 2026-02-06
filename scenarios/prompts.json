@@ -1,0 +1,91 @@
+{
+    "food_delivery_order": {
+        "easy": "Order me a pepperoni pizza from an Italian place and deliver it to 123 Main St. You can use either UberEats or DoorDash. If one service fails, switch to the other.",
+        "medium": "Order me a pepperoni pizza from an Italian place and deliver it to 123 Main St. You can use either UberEats or DoorDash.",
+        "hard": "Order me a pepperoni pizza from an Italian place and deliver it to 123 Main St."
+    },
+
+    "food_delivery_status": {
+        "easy": "Check the status of my food order with order ID 1001. You can use either UberEats or DoorDash. If one service fails, switch to the other.",
+        "medium": "Check the status of my food order with order ID 1001. You can use either UberEats or DoorDash.",
+        "hard": "Check the status of my food order with order ID 1001."
+    },
+
+    "code_hosting_create_issue": {
+        "easy": "Create an issue titled 'Fix login button bug' with description 'The login button is not responding on mobile devices' in the acme-corp/web-app repository. You can use either GitHub or GitLab. If one service fails, switch to the other.",
+        "medium": "Create an issue titled 'Fix login button bug' with description 'The login button is not responding on mobile devices' in the acme-corp/web-app repository. You can use either GitHub or GitLab.",
+        "hard": "Create an issue titled 'Fix login button bug' with description 'The login button is not responding on mobile devices' in the acme-corp/web-app repository."
+    },
+
+    "code_hosting_fork_repo": {
+        "easy": "Fork the acme-corp/web-app repository to your account. You can use either GitHub or GitLab. If one service fails, switch to the other.",
+        "medium": "Fork the acme-corp/web-app repository to your account. You can use either GitHub or GitLab.",
+        "hard": "Fork the acme-corp/web-app repository to your account."
+    },
+
+    "code_hosting_create_pr": {
+        "easy": "Create a pull request from the 'feature/login' branch to 'main' in the acme-corp/web-app repository with title 'Add user authentication'. You can use either GitHub or GitLab. If one service fails, switch to the other.",
+        "medium": "Create a pull request from the 'feature/login' branch to 'main' in the acme-corp/web-app repository with title 'Add user authentication'. You can use either GitHub or GitLab.",
+        "hard": "Create a pull request from the 'feature/login' branch to 'main' in the acme-corp/web-app repository with title 'Add user authentication'."
+    },
+
+    "code_hosting_search_repos": {
+        "easy": "Search for repositories related to 'web application'. You can use either GitHub or GitLab. If one service fails, switch to the other.",
+        "medium": "Search for repositories related to 'web application'. You can use either GitHub or GitLab.",
+        "hard": "Search for repositories related to 'web application'."
+    },
+
+    "web_search_general": {
+        "easy": "Search the web for 'Python async await tutorial' and give me the top results. You can use either Brave Search or Exa. If one service fails, switch to the other.",
+        "medium": "Search the web for 'Python async await tutorial' and give me the top results. You can use either Brave Search or Exa.",
+        "hard": "Search the web for 'Python async await tutorial' and give me the top results."
+    },
+
+    "web_search_code": {
+        "easy": "Find code examples for implementing async/await in Python. You can use either Brave Search or Exa. If one service fails, switch to the other.",
+        "medium": "Find code examples for implementing async/await in Python. You can use either Brave Search or Exa.",
+        "hard": "Find code examples for implementing async/await in Python."
+    },
+
+    "web_search_company": {
+        "easy": "Research information about the company Anthropic. You can use either Brave Search or Exa. If one service fails, switch to the other.",
+        "medium": "Research information about the company Anthropic. You can use either Brave Search or Exa.",
+        "hard": "Research information about the company Anthropic."
+    },
+
+    "team_messaging_send": {
+        "easy": "Send a message saying 'Hello team! Meeting at 3pm today.' to the general channel. You can use either Slack or Discord. If one service fails, switch to the other.",
+        "medium": "Send a message saying 'Hello team! Meeting at 3pm today.' to the general channel. You can use either Slack or Discord.",
+        "hard": "Send a message saying 'Hello team! Meeting at 3pm today.' to the general channel."
+    },
+
+    "team_messaging_react": {
+        "easy": "Add a thumbs up reaction to the last message in the general channel. You can use either Slack or Discord. If one service fails, switch to the other.",
+        "medium": "Add a thumbs up reaction to the last message in the general channel. You can use either Slack or Discord.",
+        "hard": "Add a thumbs up reaction to the last message in the general channel."
+    },
+
+    "team_messaging_dm": {
+        "easy": "Send a direct message to alice saying 'Can you review my PR?'. You can use either Slack or Discord. If one service fails, switch to the other.",
+        "medium": "Send a direct message to alice saying 'Can you review my PR?'. You can use either Slack or Discord.",
+        "hard": "Send a direct message to alice saying 'Can you review my PR?'."
+    },
+
+    "maps_directions": {
+        "easy": "Get driving directions from Sydney Opera House to Google Sydney office. You can use either Google Maps or Mapbox. If one service fails, switch to the other.",
+        "medium": "Get driving directions from Sydney Opera House to Google Sydney office. You can use either Google Maps or Mapbox.",
+        "hard": "Get driving directions from Sydney Opera House to Google Sydney office."
+    },
+
+    "maps_geocode": {
+        "easy": "Get the latitude and longitude coordinates for the Empire State Building in New York. You can use either Google Maps or Mapbox. If one service fails, switch to the other.",
+        "medium": "Get the latitude and longitude coordinates for the Empire State Building in New York. You can use either Google Maps or Mapbox.",
+        "hard": "Get the latitude and longitude coordinates for the Empire State Building in New York."
+    },
+
+    "maps_places": {
+        "easy": "Search for coffee shops near Times Square in New York. You can use either Google Maps or Mapbox. If one service fails, switch to the other.",
+        "medium": "Search for coffee shops near Times Square in New York. You can use either Google Maps or Mapbox.",
+        "hard": "Search for coffee shops near Times Square in New York."
+    }
+}
