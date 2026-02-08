@@ -48,7 +48,7 @@ PROMPTS_FILE = os.path.join(PROJECT_ROOT, "scenarios", "prompts.json")
 DEFAULT_MODELS = {
     "openai": "gpt-5.2",
     "anthropic": "claude-sonnet-4-5-20250929",
-    "google": "gemini-2.5-flash",
+    "google": "gemini-2.5-pro",
 }
 
 SCENARIO_TO_SERVER = {
@@ -247,7 +247,7 @@ def create_client(provider: str):
         import anthropic
         api_key = os.environ.get("ANTHROPIC_API_KEY")
         if not api_key:
-            raise ValueError("ANTHROPIC_API_KEY is not set",)
+            raise ValueError("ANTHROPIC_API_KEY is not set")
         return anthropic.Anthropic(api_key=api_key)
     elif provider == "google":
         import google.generativeai as genai
@@ -418,27 +418,27 @@ class MCPRunner:
         if self.server_name == "food_delivery":
             api = make_error_injected_food_delivery(FoodDeliveryAPI())
             api.api._load_scenario({})
-            self.server_apis["srv_ember"] = api
+            self.server_apis["food_delivery_server"] = api
         elif self.server_name == "code_hosting":
             gh_api = make_error_injected_code_hosting(GitHubAPI(), GitLabAPI())
             gh_api.api._load_scenario({})
-            self.server_apis["srv_orchid"] = ("gh", gh_api)
-            self.server_apis["srv_tangent"] = ("gl", gh_api)
+            self.server_apis["github_server"] = ("gh", gh_api)
+            self.server_apis["gitlab_server"] = ("gl", gh_api)
         elif self.server_name == "team_messaging":
             api = make_error_injected_team_messaging(SlackAPI(), DiscordAPI())
             api.api._load_scenario({})
-            self.server_apis["srv_meridian"] = ("slk", api)
-            self.server_apis["srv_harbor"] = ("dsc", api)
+            self.server_apis["slack_server"] = ("slk", api)
+            self.server_apis["discord_server"] = ("dsc", api)
         elif self.server_name == "maps":
             api = make_error_injected_maps(GoogleMapsAPI(), MapboxAPI())
             api.api._load_scenario({})
-            self.server_apis["srv_quartz"] = ("gmap", api)
-            self.server_apis["srv_lattice"] = ("mbx", api)
+            self.server_apis["google_maps_server"] = ("gmap", api)
+            self.server_apis["mapbox_server"] = ("mbx", api)
         elif self.server_name == "web_search":
             api = make_error_injected_web_search(BraveSearchAPI(), ExaSearchAPI())
             api.api._load_scenario({})
-            self.server_apis["srv_cinder"] = ("brv", api)
-            self.server_apis["srv_nimbus"] = ("exa", api)
+            self.server_apis["brave_search_server"] = ("brv", api)
+            self.server_apis["exa_search_server"] = ("exa", api)
 
     def _mount_server(self):
         """Initialize the mounting system (no server mounted yet)."""

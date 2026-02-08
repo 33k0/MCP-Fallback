@@ -2,79 +2,79 @@
 # Models must first discover available MCPs, then mount one to see its tools
 # This simulates real-world tool discovery and prevents seeing all options at once
 
-# Server names are intentionally generic - no hints about what service they are
+# Server names are explicit brand names for easier identification.
 MCP_SERVER_CATALOG = {
     # =========================================================================
     # Code Hosting Servers (GitHub / GitLab)
     # =========================================================================
-    "srv_orchid": {
-        "display_name": "Orchid Node",
+    "github_server": {
+        "display_name": "GitHub Server",
         "category": "development",
-        "brief": "Unified enterprise operations endpoint",
+        "brief": "GitHub code hosting and collaboration API endpoint",
         "prefix": "gh",
     },
-    "srv_tangent": {
-        "display_name": "Tangent Node",
+    "gitlab_server": {
+        "display_name": "GitLab Server",
         "category": "development",
-        "brief": "Managed workflow orchestration endpoint",
+        "brief": "GitLab project and merge workflow API endpoint",
         "prefix": "gl",
     },
 
     # =========================================================================
     # Team Communication Servers (Slack / Discord)
     # =========================================================================
-    "srv_meridian": {
-        "display_name": "Meridian Node",
+    "slack_server": {
+        "display_name": "Slack Server",
         "category": "communication",
-        "brief": "Managed session transport endpoint",
+        "brief": "Slack workspace messaging API endpoint",
         "prefix": "slk",
     },
-    "srv_harbor": {
-        "display_name": "Harbor Node",
+    "discord_server": {
+        "display_name": "Discord Server",
         "category": "communication",
-        "brief": "High-throughput interaction endpoint",
+        "brief": "Discord server messaging API endpoint",
         "prefix": "dsc",
     },
 
     # =========================================================================
     # Maps & Navigation Servers (Google Maps / Mapbox)
     # =========================================================================
-    "srv_quartz": {
-        "display_name": "Quartz Node",
+    "google_maps_server": {
+        "display_name": "Google Maps Server",
         "category": "geolocation",
-        "brief": "Structured query execution endpoint",
+        "brief": "Google Maps routing and geocoding API endpoint",
         "prefix": "gmap",
     },
-    "srv_lattice": {
-        "display_name": "Lattice Node",
+    "mapbox_server": {
+        "display_name": "Mapbox Server",
         "category": "geolocation",
-        "brief": "Adaptive resolution compute endpoint",
+        "brief": "Mapbox geospatial search and routing API endpoint",
         "prefix": "mbx",
     },
 
     # =========================================================================
     # Search Servers (Brave / Exa)
     # =========================================================================
-    "srv_cinder": {
-        "display_name": "Cinder Node",
+    "brave_search_server": {
+        "display_name": "Brave Search Server",
         "category": "search",
-        "brief": "General-purpose retrieval endpoint",
+        "brief": "Brave web and local search API endpoint",
         "prefix": "brv",
     },
-    "srv_nimbus": {
-        "display_name": "Nimbus Node",
+    "exa_search_server": {
+        "display_name": "Exa Search Server",
         "category": "search",
-        "brief": "Extended context analysis endpoint",
+        "brief": "Exa semantic research and code search API endpoint",
         "prefix": "exa",
     },
 
     # =========================================================================
     # Food Delivery - SINGLE combined server (special case)
     # =========================================================================
-    "srv_ember": {
-        "display_name": "Ember Node",
+    "food_delivery_server": {
+        "display_name": "Food Delivery Server",
         "category": "food_delivery",
-        "brief": "Transactional workflow endpoint",
+        "brief": "Combined DoorDash and UberEats ordering API endpoint",
         "prefix": "food",
         "combined": True,
     },
@@ -82,24 +82,24 @@ MCP_SERVER_CATALOG = {
 
 # Maps scenario categories to relevant MCP servers
 CATEGORY_TO_MCPS = {
-    "code_hosting": ["srv_orchid", "srv_tangent"],
-    "team_messaging": ["srv_meridian", "srv_harbor"],
-    "maps": ["srv_quartz", "srv_lattice"],
-    "web_search": ["srv_cinder", "srv_nimbus"],
-    "food_delivery": ["srv_ember"],  # Only one server for food
+    "code_hosting": ["github_server", "gitlab_server"],
+    "team_messaging": ["slack_server", "discord_server"],
+    "maps": ["google_maps_server", "mapbox_server"],
+    "web_search": ["brave_search_server", "exa_search_server"],
+    "food_delivery": ["food_delivery_server"],  # Only one server for food
 }
 
 # Maps server IDs to their paired alternative (for fallback hints in easy mode)
 MCP_PAIRS = {
-    "srv_orchid": "srv_tangent",
-    "srv_tangent": "srv_orchid",
-    "srv_meridian": "srv_harbor",
-    "srv_harbor": "srv_meridian",
-    "srv_quartz": "srv_lattice",
-    "srv_lattice": "srv_quartz",
-    "srv_cinder": "srv_nimbus",
-    "srv_nimbus": "srv_cinder",
-    "srv_ember": None,  # No pair - it's combined
+    "github_server": "gitlab_server",
+    "gitlab_server": "github_server",
+    "slack_server": "discord_server",
+    "discord_server": "slack_server",
+    "google_maps_server": "mapbox_server",
+    "mapbox_server": "google_maps_server",
+    "brave_search_server": "exa_search_server",
+    "exa_search_server": "brave_search_server",
+    "food_delivery_server": None,  # No pair - it's combined
 }
 
 
