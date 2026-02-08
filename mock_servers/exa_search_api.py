@@ -46,6 +46,22 @@ DEFAULT_STATE = {
             "author": "Sebastián Ramírez",
             "score": 0.87,
         },
+        {
+            "title": "QuantumLeaf Framework - Getting Started",
+            "url": "https://quantumleaf.dev/docs/getting-started",
+            "text": "QuantumLeaf is a reactive state management framework for distributed edge computing. Install with: pip install quantumleaf. Supports Python 3.10+ and Rust bindings.",
+            "published_date": "2024-02-01",
+            "author": "QuantumLeaf Team",
+            "score": 0.96,
+        },
+        {
+            "title": "QuantumLeaf 3.0 Release Notes",
+            "url": "https://quantumleaf.dev/blog/3.0-release",
+            "text": "QuantumLeaf 3.0 introduces automatic state reconciliation, edge-native deployment, and a new reactive propagation engine with 40% lower latency.",
+            "published_date": "2024-01-28",
+            "author": "QuantumLeaf Team",
+            "score": 0.93,
+        },
     ],
     "code_results": [
         {
@@ -65,12 +81,20 @@ DEFAULT_STATE = {
             "score": 0.88,
         },
         {
-            "title": "Async/await in Python - Official Docs",
-            "url": "https://docs.python.org/3/library/asyncio.html",
-            "text": "import asyncio\n\nasync def main():\n    await asyncio.sleep(1)\n    print('Hello')\n\nasyncio.run(main())",
+            "title": "QuantumLeaf reactive state example - GitHub",
+            "url": "https://github.com/quantumleaf-dev/quantumleaf/examples/reactive.py",
+            "text": "from quantumleaf import ReactiveNode, StateGraph\n\ngraph = StateGraph()\nnode = ReactiveNode('counter', initial=0)\ngraph.add(node)\n\n@node.on_change\nasync def handle(old, new):\n    print(f'State changed: {old} -> {new}')",
+            "source": "github",
+            "language": "python",
+            "score": 0.94,
+        },
+        {
+            "title": "QuantumLeaf edge deployment - Docs",
+            "url": "https://quantumleaf.dev/docs/deployment",
+            "text": "from quantumleaf.edge import EdgeCluster\n\ncluster = EdgeCluster(regions=['us-east', 'eu-west'])\ncluster.deploy(graph, replicas=3)",
             "source": "documentation",
             "language": "python",
-            "score": 0.85,
+            "score": 0.90,
         },
     ],
     "companies": [
@@ -100,6 +124,20 @@ DEFAULT_STATE = {
             "news": [
                 {"title": "Anthropic Launches Claude 3", "date": "2024-01-18"},
                 {"title": "Anthropic Raises Series C", "date": "2024-01-10"},
+            ],
+        },
+        {
+            "name": "Velox Dynamics",
+            "domain": "veloxdynamics.com",
+            "description": "Velox Dynamics builds autonomous logistics infrastructure for last-mile freight routing and warehouse orchestration.",
+            "industry": "Autonomous Logistics",
+            "founded": 2023,
+            "headquarters": "Palo Alto, CA",
+            "employee_count": "50-100",
+            "funding": "$47M Series B",
+            "news": [
+                {"title": "Velox Dynamics Raises $47M Series B", "date": "2024-02-01"},
+                {"title": "Velox Partners with FedEx for Pilot Program", "date": "2024-01-20"},
             ],
         },
     ],
@@ -155,6 +193,11 @@ class ExaSearchAPI:
         import copy
         self.state = copy.deepcopy(DEFAULT_STATE)
         self.state.update(scenario)
+        self.state["_search_epoch"] = 0
+
+    def invalidate_transient_handles(self) -> None:
+        """Advance epoch to invalidate old result IDs after disruption."""
+        self.state["_search_epoch"] += 1
 
     # =========================================================================
     # Tool 1: web_search_exa (DEFAULT ENABLED)
@@ -179,6 +222,7 @@ class ExaSearchAPI:
         Returns:
             dict: Search results with titles, URLs, text content, and relevance scores
         """
+        self.state["_search_epoch"] += 1
         query_lower = query.lower()
         matching_results = []
 
@@ -195,9 +239,11 @@ class ExaSearchAPI:
 
         return {
             "query": query,
+            "search_epoch": self.state["_search_epoch"],
             "total_results": len(matching_results),
             "results": [
                 {
+                    "result_id": f"exa_{self.state['_search_epoch']}_{i}",
                     "title": r["title"],
                     "url": r["url"],
                     "text": r["text"][:500],
@@ -205,7 +251,7 @@ class ExaSearchAPI:
                     "author": r.get("author"),
                     "score": r.get("score", 0.5),
                 }
-                for r in paginated
+                for i, r in enumerate(paginated)
             ],
         }
 
@@ -233,6 +279,7 @@ class ExaSearchAPI:
         Returns:
             dict: Code examples with source, language, and explanations
         """
+        self.state["_search_epoch"] += 1
         query_lower = query.lower()
         matching_results = []
 
@@ -255,10 +302,12 @@ class ExaSearchAPI:
 
         return {
             "query": query,
+            "search_epoch": self.state["_search_epoch"],
             "language_filter": language,
             "total_results": len(matching_results),
             "results": [
                 {
+                    "result_id": f"exa_code_{self.state['_search_epoch']}_{i}",
                     "title": r["title"],
                     "url": r["url"],
                     "code": r["text"],
@@ -266,7 +315,7 @@ class ExaSearchAPI:
                     "language": r.get("language"),
                     "score": r.get("score", 0.5),
                 }
-                for r in paginated
+                for i, r in enumerate(paginated)
             ],
         }
 
@@ -291,13 +340,16 @@ class ExaSearchAPI:
         Returns:
             dict: Company profile with business details and recent news
         """
+        self.state["_search_epoch"] += 1
         name_lower = company_name.lower()
 
         for company in self.state["companies"]:
             if name_lower in company["name"].lower():
                 return {
                     "found": True,
+                    "search_epoch": self.state["_search_epoch"],
                     "company": {
+                        "company_result_id": f"exa_company_{self.state['_search_epoch']}_{company['name'].lower().replace(' ', '_')}",
                         "name": company["name"],
                         "domain": company["domain"],
                         "description": company["description"],

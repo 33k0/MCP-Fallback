@@ -50,6 +50,30 @@ DEFAULT_STATE = {
             "place_type": ["poi"],
             "category": "cafe",
         },
+        {
+            "id": "poi.fake01",
+            "name": "SkyLabs Research Center",
+            "full_address": "1200 Innovation Drive, Boulder, CO 80301, USA",
+            "coordinates": [-105.2705, 40.0150],
+            "place_type": ["poi"],
+            "category": "office",
+        },
+        {
+            "id": "poi.fake02",
+            "name": "Neutron Brewing Co",
+            "full_address": "47 Birchwood Lane, Amherst, MA 01002, USA",
+            "coordinates": [-72.5199, 42.3732],
+            "place_type": ["poi"],
+            "category": "cafe",
+        },
+        {
+            "id": "poi.fake03",
+            "name": "Velox Dynamics HQ",
+            "full_address": "890 Quantum Boulevard, Palo Alto, CA 94301, USA",
+            "coordinates": [-122.1430, 37.4419],
+            "place_type": ["poi"],
+            "category": "office",
+        },
     ],
 }
 
@@ -88,6 +112,13 @@ class MapboxAPI:
         import copy
         self.state = copy.deepcopy(DEFAULT_STATE)
         self.state.update(scenario)
+        self.state["_query_epoch"] = 0
+        self.state["_feature_handles"] = {}
+
+    def invalidate_transient_handles(self) -> None:
+        """Invalidate volatile feature handles after failure/remount."""
+        self.state["_query_epoch"] += 1
+        self.state["_feature_handles"] = {}
 
     # =========================================================================
     # OVERLAPPING TOOLS (similar to Google Maps)
@@ -112,15 +143,20 @@ class MapboxAPI:
         Returns:
             dict: Geocoding result with coordinates
         """
+        self.state["_query_epoch"] += 1
+        self.state["_feature_handles"] = {}
         address_lower = address.lower()
 
         # Check known places
         for place in self.state["places"]:
             if address_lower in place["name"].lower():
+                handle = f"mbx_ref_{self.state['_query_epoch']}_{place['id']}"
+                self.state["_feature_handles"][handle] = place["id"]
                 return {
                     "type": "FeatureCollection",
                     "features": [{
-                        "id": place["id"],
+                        "id": handle,
+                        "source_id": place["id"],
                         "type": "Feature",
                         "place_name": place["full_address"],
                         "center": place["coordinates"],
@@ -210,14 +246,19 @@ class MapboxAPI:
         Returns:
             dict: List of matching places
         """
+        self.state["_query_epoch"] += 1
+        self.state["_feature_handles"] = {}
         query_lower = query.lower()
         matching = []
 
-        for place in self.state["places"]:
+        for idx, place in enumerate(self.state["places"]):
             if (query_lower in place["name"].lower() or
                 query_lower in place.get("category", "").lower()):
+                handle = f"mbx_ref_{self.state['_query_epoch']}_{idx}"
+                self.state["_feature_handles"][handle] = place["id"]
                 matching.append({
-                    "id": place["id"],
+                    "id": handle,
+                    "source_id": place["id"],
                     "type": "Feature",
                     "place_name": place["full_address"],
                     "center": place["coordinates"],
@@ -228,16 +269,21 @@ class MapboxAPI:
                 })
 
         if not matching:
-            matching = [{
-                "id": p["id"],
-                "type": "Feature",
-                "place_name": p["full_address"],
-                "center": p["coordinates"],
-                "properties": {"name": p["name"]},
-            } for p in self.state["places"][:limit]]
+            for idx, p in enumerate(self.state["places"][:limit]):
+                handle = f"mbx_ref_{self.state['_query_epoch']}_{idx}"
+                self.state["_feature_handles"][handle] = p["id"]
+                matching.append({
+                    "id": handle,
+                    "source_id": p["id"],
+                    "type": "Feature",
+                    "place_name": p["full_address"],
+                    "center": p["coordinates"],
+                    "properties": {"name": p["name"]},
+                })
 
         return {
             "type": "FeatureCollection",
+            "query_epoch": self.state["_query_epoch"],
             "features": matching[:limit],
         }
 

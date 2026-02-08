@@ -96,6 +96,27 @@ class FoodDeliveryAPI:
         self.orders = scenario.get("orders", DEFAULT_STATE_COPY["orders"])
         self.orders = {int(k): v for k, v in self.orders.items()} if self.orders else {}
         self.order_counter = scenario.get("order_counter", DEFAULT_STATE_COPY["order_counter"])
+        # Drift model: restaurant handles expire when a new search happens.
+        self._ue_search_epoch = 0
+        self._dd_search_epoch = 0
+        self._ue_restaurant_handles = {}
+        self._dd_restaurant_handles = {}
+
+    def _resolve_ue_restaurant(self, handle: int) -> Optional[int]:
+        return self._ue_restaurant_handles.get(handle)
+
+    def _resolve_dd_restaurant(self, handle: int) -> Optional[int]:
+        return self._dd_restaurant_handles.get(handle)
+
+    def invalidate_transient_handles(self) -> None:
+        """
+        Invalidate volatile restaurant handles across providers.
+        Called by the harness after injected failures and mount switches.
+        """
+        self._ue_search_epoch += 1
+        self._dd_search_epoch += 1
+        self._ue_restaurant_handles = {}
+        self._dd_restaurant_handles = {}
 
     # ==========================================
     # UberEats Methods
@@ -126,11 +147,14 @@ class FoodDeliveryAPI:
         if not self.ubereats_authenticated:
             return {"error": "User not authenticated. Please log in to UberEats first."}
 
-        results = [
-            {"id": rid, **rdata}
-            for rid, rdata in self.restaurants.items()
-            if cuisine.lower() in rdata["cuisine"].lower()
-        ]
+        self._ue_search_epoch += 1
+        self._ue_restaurant_handles = {}
+        results = []
+        for rid, rdata in self.restaurants.items():
+            if cuisine.lower() in rdata["cuisine"].lower():
+                handle = (self._ue_search_epoch * 1000) + rid
+                self._ue_restaurant_handles[handle] = rid
+                results.append({"id": handle, "source_restaurant_id": rid, **rdata})
         return {"restaurants": results}
 
     def ubereats_get_menu(self, restaurant_id: int) -> Dict:
@@ -146,12 +170,15 @@ class FoodDeliveryAPI:
         if not self.ubereats_authenticated:
             return {"error": "User not authenticated. Please log in to UberEats first."}
 
-        if restaurant_id not in self.restaurants:
+        resolved_id = self._resolve_ue_restaurant(restaurant_id)
+        if resolved_id is None:
+            return {"error": "Restaurant handle is stale. Re-run restaurant search before fetching menu."}
+        if resolved_id not in self.restaurants:
             return {"error": f"Restaurant with ID {restaurant_id} not found."}
 
         return {
-            "restaurant_name": self.restaurants[restaurant_id]["name"],
-            "menu": self.menus.get(restaurant_id, []),
+            "restaurant_name": self.restaurants[resolved_id]["name"],
+            "menu": self.menus.get(resolved_id, []),
         }
 
     def ubereats_place_order(
@@ -176,10 +203,13 @@ class FoodDeliveryAPI:
         if not self.ubereats_authenticated:
             return {"error": "User not authenticated. Please log in to UberEats first."}
 
-        if restaurant_id not in self.restaurants:
+        resolved_id = self._resolve_ue_restaurant(restaurant_id)
+        if resolved_id is None:
+            return {"error": "Restaurant handle is stale. Re-run restaurant search before placing order."}
+        if resolved_id not in self.restaurants:
             return {"error": f"Restaurant with ID {restaurant_id} not found."}
 
-        menu = self.menus.get(restaurant_id, [])
+        menu = self.menus.get(resolved_id, [])
         menu_item_ids = {item["item_id"] for item in menu}
         ordered_items = []
         for item_id in item_ids:
@@ -194,11 +224,11 @@ class FoodDeliveryAPI:
         order = {
             "order_id": self.order_counter,
             "service": "ubereats",
-            "restaurant": self.restaurants[restaurant_id]["name"],
+            "restaurant": self.restaurants[resolved_id]["name"],
             "items": ordered_items,
             "total": total,
             "delivery_address": delivery_address,
-            "estimated_delivery": self.restaurants[restaurant_id]["delivery_time"],
+            "estimated_delivery": self.restaurants[resolved_id]["delivery_time"],
             "status": "confirmed",
         }
         self.orders[self.order_counter] = order
@@ -258,17 +288,21 @@ class FoodDeliveryAPI:
         if not self.doordash_authenticated:
             return {"error": "Not logged in. Please authenticate with DoorDash first."}
 
-        results = [
-            {
-                "restaurant_id": rid,
-                "restaurant_name": rdata["name"],
-                "food_type": rdata["cuisine"],
-                "customer_rating": rdata["rating"],
-                "eta_minutes": rdata["delivery_time"],
-            }
-            for rid, rdata in self.restaurants.items()
-            if food_type.lower() in rdata["cuisine"].lower()
-        ]
+        self._dd_search_epoch += 1
+        self._dd_restaurant_handles = {}
+        results = []
+        for rid, rdata in self.restaurants.items():
+            if food_type.lower() in rdata["cuisine"].lower():
+                handle = (self._dd_search_epoch * 1000) + rid
+                self._dd_restaurant_handles[handle] = rid
+                results.append({
+                    "restaurant_id": handle,
+                    "source_restaurant_id": rid,
+                    "restaurant_name": rdata["name"],
+                    "food_type": rdata["cuisine"],
+                    "customer_rating": rdata["rating"],
+                    "eta_minutes": rdata["delivery_time"],
+                })
         return {"available_restaurants": results}
 
     def doordash_view_menu(self, restaurant_id: int) -> Dict:
@@ -284,17 +318,20 @@ class FoodDeliveryAPI:
         if not self.doordash_authenticated:
             return {"error": "Not logged in. Please authenticate with DoorDash first."}
 
-        if restaurant_id not in self.restaurants:
+        resolved_id = self._resolve_dd_restaurant(restaurant_id)
+        if resolved_id is None:
+            return {"error": "Restaurant handle is stale. Re-run restaurant search before viewing menu."}
+        if resolved_id not in self.restaurants:
             return {"error": f"Restaurant with ID {restaurant_id} not found."}
 
-        menu = self.menus.get(restaurant_id, [])
+        menu = self.menus.get(resolved_id, [])
         # DoorDash returns items with different field names than UberEats
         dd_menu = [
             {"id": item["item_id"], "item_name": item["name"], "item_price": item["price"]}
             for item in menu
         ]
         return {
-            "store_name": self.restaurants[restaurant_id]["name"],
+            "store_name": self.restaurants[resolved_id]["name"],
             "menu_items": dd_menu,
         }
 
@@ -320,10 +357,13 @@ class FoodDeliveryAPI:
         if not self.doordash_authenticated:
             return {"error": "Not logged in. Please authenticate with DoorDash first."}
 
-        if restaurant_id not in self.restaurants:
+        resolved_id = self._resolve_dd_restaurant(restaurant_id)
+        if resolved_id is None:
+            return {"error": "Restaurant handle is stale. Re-run restaurant search before submitting order."}
+        if resolved_id not in self.restaurants:
             return {"error": f"Restaurant with ID {restaurant_id} not found."}
 
-        menu = self.menus.get(restaurant_id, [])
+        menu = self.menus.get(resolved_id, [])
         menu_lookup = {item["item_id"]: item for item in menu}
         ordered_items = []
         for order_item in items:
@@ -345,21 +385,21 @@ class FoodDeliveryAPI:
         order = {
             "order_id": self.order_counter,
             "service": "doordash",
-            "restaurant": self.restaurants[restaurant_id]["name"],
+            "restaurant": self.restaurants[resolved_id]["name"],
             "items": ordered_items,
             "total": order_total,
             "delivery_address": delivery_location,
-            "estimated_delivery": self.restaurants[restaurant_id]["delivery_time"],
+            "estimated_delivery": self.restaurants[resolved_id]["delivery_time"],
             "status": "confirmed",
         }
         self.orders[self.order_counter] = order
         confirmation = {
             "confirmation_number": self.order_counter,
-            "store": self.restaurants[restaurant_id]["name"],
+            "store": self.restaurants[resolved_id]["name"],
             "order_items": ordered_items,
             "order_total": order_total,
             "delivery_location": delivery_location,
-            "eta": self.restaurants[restaurant_id]["delivery_time"],
+            "eta": self.restaurants[resolved_id]["delivery_time"],
             "order_status": "confirmed",
         }
         self.order_counter += 1

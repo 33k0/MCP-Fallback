@@ -152,6 +152,11 @@ class GitLabAPI:
         import copy
         self.state = copy.deepcopy(DEFAULT_STATE)
         self.state.update(scenario)
+        self.state.setdefault("_query_epoch", 0)
+        self.state.setdefault("_project_generation", {})
+        self.state.setdefault("_project_handles", {})
+        for project in self.state["projects"]:
+            self.state["_project_generation"].setdefault(project["path_with_namespace"], 1)
 
     def _find_project(self, project_id) -> Optional[Dict]:
         """Find a project by ID or path."""
@@ -167,6 +172,11 @@ class GitLabAPI:
         except (ValueError, TypeError):
             pass
         return None
+
+    def invalidate_transient_handles(self) -> None:
+        """Invalidate volatile project search handles."""
+        self.state["_query_epoch"] += 1
+        self.state["_project_handles"] = {}
 
     # =========================================================================
     # Tool 1: search_repositories
@@ -184,20 +194,30 @@ class GitLabAPI:
         Returns:
             dict: Search results with matching projects
         """
+        self.state["_query_epoch"] += 1
+        self.state["_project_handles"] = {}
         query_lower = search.lower()
         matches = []
         for project in self.state["projects"]:
             if (query_lower in project["name"].lower() or
                 query_lower in project.get("description", "").lower()):
+                handle = f"p_{self.state['_query_epoch']}_{project['id']}"
+                self.state["_project_handles"][handle] = {
+                    "project": project["path_with_namespace"],
+                    "epoch": self.state["_query_epoch"],
+                }
                 matches.append({
                     "id": project["id"],
                     "path_with_namespace": project["path_with_namespace"],
                     "description": project["description"],
                     "visibility": project["visibility"],
+                    "result_handle": handle,
+                    "project_generation": self.state["_project_generation"].get(project["path_with_namespace"], 1),
                 })
 
         return {
             "total_count": len(matches),
+            "query_epoch": self.state["_query_epoch"],
             "items": matches[(page-1)*per_page : page*per_page],
         }
 
@@ -237,6 +257,7 @@ class GitLabAPI:
             "merge_requests": [],
         }
         self.state["projects"].append(new_project)
+        self.state["_project_generation"][new_project["path_with_namespace"]] = 1
         return {
             "id": new_project["id"],
             "path_with_namespace": new_project["path_with_namespace"],
@@ -279,6 +300,7 @@ class GitLabAPI:
             "forked_from_id": source["id"],
         }
         self.state["projects"].append(forked)
+        self.state["_project_generation"][forked["path_with_namespace"]] = 1
         return {
             "id": forked["id"],
             "path_with_namespace": forked["path_with_namespace"],
@@ -497,6 +519,7 @@ class GitLabAPI:
             "created_at": "2024-01-20T12:00:00Z",
         }
         project["issues"].append(new_issue)
+        self.state["_project_generation"][project["path_with_namespace"]] = self.state["_project_generation"].get(project["path_with_namespace"], 1) + 1
 
         return {
             "iid": issue_iid,
@@ -564,6 +587,7 @@ class GitLabAPI:
             "draft": draft,
         }
         project["merge_requests"].append(new_mr)
+        self.state["_project_generation"][project["path_with_namespace"]] = self.state["_project_generation"].get(project["path_with_namespace"], 1) + 1
 
         return {
             "iid": mr_iid,

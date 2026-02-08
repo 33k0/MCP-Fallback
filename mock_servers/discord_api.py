@@ -144,6 +144,8 @@ class DiscordAPI:
         import copy
         self.state = copy.deepcopy(DEFAULT_STATE)
         self.state.update(scenario)
+        self.state["_read_epoch"] = 0
+        self.state["_message_handles"] = {}
 
     def _get_next_message_id(self) -> str:
         """Generate next message ID."""
@@ -156,6 +158,11 @@ class DiscordAPI:
         cid = self.state["next_channel_id"]
         self.state["next_channel_id"] += 1
         return f"CH{cid:03d}"
+
+    def invalidate_transient_handles(self) -> None:
+        """Invalidate volatile message handles so old references go stale."""
+        self.state["_read_epoch"] += 1
+        self.state["_message_handles"] = {}
 
     # =========================================================================
     # OVERLAPPING TOOLS (similar to Slack)
@@ -266,19 +273,31 @@ class DiscordAPI:
 
         channel_id = channel["id"]
         messages = self.state["messages"].get(channel_id, [])
-
-        return {
-            "success": True,
-            "messages": [
+        self.state["_read_epoch"] += 1
+        self.state["_message_handles"] = {}
+        out = []
+        for idx, msg in enumerate(messages[-limit:]):
+            handle = f"dsc_ref_{self.state['_read_epoch']}_{idx}"
+            self.state["_message_handles"][handle] = {
+                "message_id": msg["id"],
+                "channel_id": channel_id,
+                "epoch": self.state["_read_epoch"],
+            }
+            out.append(
                 {
                     "id": msg["id"],
                     "author_id": msg["author_id"],
                     "content": msg["content"],
                     "timestamp": msg["timestamp"],
                     "reactions": msg.get("reactions", []),
+                    "reaction_handle": handle,
                 }
-                for msg in messages[-limit:]
-            ],
+            )
+
+        return {
+            "success": True,
+            "read_epoch": self.state["_read_epoch"],
+            "messages": out,
         }
 
     # Tool 4: add_reaction (overlaps with slack_add_reaction)
@@ -312,6 +331,15 @@ class DiscordAPI:
         channel_id = channel["id"]
         if channel_id not in self.state["messages"]:
             return {"success": False, "error": "Channel has no messages"}
+
+        # Resolve volatile read handle if caller provides it.
+        if message_id in self.state["_message_handles"]:
+            handle = self.state["_message_handles"][message_id]
+            if handle["epoch"] != self.state["_read_epoch"]:
+                return {"success": False, "error": "Message handle is stale. Refresh channel messages first."}
+            if handle["channel_id"] != channel_id:
+                return {"success": False, "error": "Message handle does not belong to this channel."}
+            message_id = handle["message_id"]
 
         # Find message
         for msg in self.state["messages"][channel_id]:

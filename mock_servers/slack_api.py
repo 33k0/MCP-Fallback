@@ -148,12 +148,19 @@ class SlackAPI:
         import copy
         self.state = copy.deepcopy(DEFAULT_STATE)
         self.state.update(scenario)
+        self.state["_history_epoch"] = 0
+        self.state["_reaction_handles"] = {}
 
     def _get_next_ts(self) -> str:
         """Generate next message timestamp."""
         ts = self.state["next_ts"]
         self.state["next_ts"] += 1
         return f"{ts}.000001"
+
+    def invalidate_transient_handles(self) -> None:
+        """Invalidate volatile reaction handles to force fresh history reads."""
+        self.state["_history_epoch"] += 1
+        self.state["_reaction_handles"] = {}
 
     # =========================================================================
     # Tool 1: slack_list_channels
@@ -352,6 +359,13 @@ class SlackAPI:
         if channel_id not in self.state["messages"]:
             return {"ok": False, "error": "Channel has no messages"}
 
+        # Resolve volatile message handle if provided.
+        if timestamp in self.state["_reaction_handles"]:
+            token = self.state["_reaction_handles"][timestamp]
+            if token["epoch"] != self.state["_history_epoch"]:
+                return {"ok": False, "error": "Reaction target handle is stale. Refresh channel history first."}
+            timestamp = token["ts"]
+
         # Find message and add reaction
         for msg in self.state["messages"][channel_id]:
             if msg["ts"] == timestamp:
@@ -399,19 +413,27 @@ class SlackAPI:
             return {"ok": False, "error": f"Channel '{channel}' not found"}
 
         messages = self.state["messages"].get(channel_id, [])
-
-        return {
-            "ok": True,
-            "messages": [
+        self.state["_history_epoch"] += 1
+        self.state["_reaction_handles"] = {}
+        out = []
+        for idx, msg in enumerate(messages[-limit:]):
+            handle = f"slk_ref_{self.state['_history_epoch']}_{idx}"
+            self.state["_reaction_handles"][handle] = {"ts": msg["ts"], "epoch": self.state["_history_epoch"]}
+            out.append(
                 {
                     "ts": msg["ts"],
                     "user": msg["user"],
                     "text": msg["text"],
                     "reactions": msg.get("reactions", []),
                     "reply_count": len(msg.get("replies", [])),
+                    "reaction_handle": handle,
                 }
-                for msg in messages[-limit:]
-            ],
+            )
+
+        return {
+            "ok": True,
+            "history_epoch": self.state["_history_epoch"],
+            "messages": out,
         }
 
     # =========================================================================

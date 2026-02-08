@@ -1,91 +1,91 @@
 {
     "food_delivery_order": {
         "easy": "Order me a pepperoni pizza from an Italian place and deliver it to 123 Main St. You can use either UberEats or DoorDash. If one service fails, switch to the other.",
-        "medium": "Order me a pepperoni pizza from an Italian place and deliver it to 123 Main St. You can use either UberEats or DoorDash.",
+        "medium": "Order me a pepperoni pizza from an Italian place and deliver it to 123 Main St. There are multiple servers available that can handle this request.",
         "hard": "Order me a pepperoni pizza from an Italian place and deliver it to 123 Main St."
     },
 
     "food_delivery_status": {
         "easy": "Check the status of my food order with order ID 1001. You can use either UberEats or DoorDash. If one service fails, switch to the other.",
-        "medium": "Check the status of my food order with order ID 1001. You can use either UberEats or DoorDash.",
+        "medium": "Check the status of my food order with order ID 1001. More than one service is available to complete this task.",
         "hard": "Check the status of my food order with order ID 1001."
     },
 
     "code_hosting_create_issue": {
         "easy": "Create an issue titled 'Fix login button bug' with description 'The login button is not responding on mobile devices' in the acme-corp/web-app repository. You can use either GitHub or GitLab. If one service fails, switch to the other.",
-        "medium": "Create an issue titled 'Fix login button bug' with description 'The login button is not responding on mobile devices' in the acme-corp/web-app repository. You can use either GitHub or GitLab.",
+        "medium": "Create an issue titled 'Fix login button bug' with description 'The login button is not responding on mobile devices' in the acme-corp/web-app repository. There is more than one server that can accomplish this.",
         "hard": "Create an issue titled 'Fix login button bug' with description 'The login button is not responding on mobile devices' in the acme-corp/web-app repository."
     },
 
     "code_hosting_fork_repo": {
         "easy": "Fork the acme-corp/web-app repository to your account. You can use either GitHub or GitLab. If one service fails, switch to the other.",
-        "medium": "Fork the acme-corp/web-app repository to your account. You can use either GitHub or GitLab.",
+        "medium": "Fork the acme-corp/web-app repository to your account. Multiple servers are at your disposal for this kind of task.",
         "hard": "Fork the acme-corp/web-app repository to your account."
     },
 
     "code_hosting_create_pr": {
         "easy": "Create a pull request from the 'feature/login' branch to 'main' in the acme-corp/web-app repository with title 'Add user authentication'. You can use either GitHub or GitLab. If one service fails, switch to the other.",
-        "medium": "Create a pull request from the 'feature/login' branch to 'main' in the acme-corp/web-app repository with title 'Add user authentication'. You can use either GitHub or GitLab.",
+        "medium": "Create a pull request from the 'feature/login' branch to 'main' in the acme-corp/web-app repository with title 'Add user authentication'. You have access to more than one server that offers this capability.",
         "hard": "Create a pull request from the 'feature/login' branch to 'main' in the acme-corp/web-app repository with title 'Add user authentication'."
     },
 
     "code_hosting_search_repos": {
         "easy": "Search for repositories related to 'web application'. You can use either GitHub or GitLab. If one service fails, switch to the other.",
-        "medium": "Search for repositories related to 'web application'. You can use either GitHub or GitLab.",
+        "medium": "Search for repositories related to 'web application'. There are alternative servers available if needed.",
         "hard": "Search for repositories related to 'web application'."
     },
 
     "web_search_general": {
-        "easy": "Search the web for 'Python async await tutorial' and give me the top results. You can use either Brave Search or Exa. If one service fails, switch to the other.",
-        "medium": "Search the web for 'Python async await tutorial' and give me the top results. You can use either Brave Search or Exa.",
-        "hard": "Search the web for 'Python async await tutorial' and give me the top results."
+        "easy": "Search the web for 'QuantumLeaf framework getting started' and give me the top results. You can use either Brave Search or Exa. If one service fails, switch to the other.",
+        "medium": "Search the web for 'QuantumLeaf framework getting started' and give me the top results. You have access to multiple servers that can perform this task.",
+        "hard": "Search the web for 'QuantumLeaf framework getting started' and give me the top results."
     },
 
     "web_search_code": {
-        "easy": "Find code examples for implementing async/await in Python. You can use either Brave Search or Exa. If one service fails, switch to the other.",
-        "medium": "Find code examples for implementing async/await in Python. You can use either Brave Search or Exa.",
-        "hard": "Find code examples for implementing async/await in Python."
+        "easy": "Find code examples for using the QuantumLeaf reactive state management framework. You can use either Brave Search or Exa. If one service fails, switch to the other.",
+        "medium": "Find code examples for using the QuantumLeaf reactive state management framework. There is more than one way to accomplish this with the servers available to you.",
+        "hard": "Find code examples for using the QuantumLeaf reactive state management framework."
     },
 
     "web_search_company": {
-        "easy": "Research information about the company Anthropic. You can use either Brave Search or Exa. If one service fails, switch to the other.",
-        "medium": "Research information about the company Anthropic. You can use either Brave Search or Exa.",
-        "hard": "Research information about the company Anthropic."
+        "easy": "Research information about the company Velox Dynamics. You can use either Brave Search or Exa. If one service fails, switch to the other.",
+        "medium": "Research information about the company Velox Dynamics. Multiple services are available that could help with this request.",
+        "hard": "Research information about the company Velox Dynamics."
     },
 
     "team_messaging_send": {
         "easy": "Send a message saying 'Hello team! Meeting at 3pm today.' to the general channel. You can use either Slack or Discord. If one service fails, switch to the other.",
-        "medium": "Send a message saying 'Hello team! Meeting at 3pm today.' to the general channel. You can use either Slack or Discord.",
+        "medium": "Send a message saying 'Hello team! Meeting at 3pm today.' to the general channel. There are other servers that can handle this if one doesn't work out.",
         "hard": "Send a message saying 'Hello team! Meeting at 3pm today.' to the general channel."
     },
 
     "team_messaging_react": {
         "easy": "Add a thumbs up reaction to the last message in the general channel. You can use either Slack or Discord. If one service fails, switch to the other.",
-        "medium": "Add a thumbs up reaction to the last message in the general channel. You can use either Slack or Discord.",
+        "medium": "Add a thumbs up reaction to the last message in the general channel. More than one server is available for this kind of operation.",
         "hard": "Add a thumbs up reaction to the last message in the general channel."
     },
 
-    "team_messaging_dm": {
-        "easy": "Send a direct message to alice saying 'Can you review my PR?'. You can use either Slack or Discord. If one service fails, switch to the other.",
-        "medium": "Send a direct message to alice saying 'Can you review my PR?'. You can use either Slack or Discord.",
-        "hard": "Send a direct message to alice saying 'Can you review my PR?'."
+    "team_messaging_history": {
+        "easy": "Get the recent message history from the general channel. You can use either Slack or Discord. If one service fails, switch to the other.",
+        "medium": "Get the recent message history from the general channel. You have access to alternative servers that provide similar functionality.",
+        "hard": "Get the recent message history from the general channel."
     },
 
     "maps_directions": {
-        "easy": "Get driving directions from Sydney Opera House to Google Sydney office. You can use either Google Maps or Mapbox. If one service fails, switch to the other.",
-        "medium": "Get driving directions from Sydney Opera House to Google Sydney office. You can use either Google Maps or Mapbox.",
-        "hard": "Get driving directions from Sydney Opera House to Google Sydney office."
+        "easy": "Get driving directions from 47 Birchwood Lane, Amherst to 890 Quantum Boulevard, Palo Alto. You can use either Google Maps or Mapbox. If one service fails, switch to the other.",
+        "medium": "Get driving directions from 47 Birchwood Lane, Amherst to 890 Quantum Boulevard, Palo Alto. There are multiple servers at your disposal that can fulfill this request.",
+        "hard": "Get driving directions from 47 Birchwood Lane, Amherst to 890 Quantum Boulevard, Palo Alto."
     },
 
     "maps_geocode": {
-        "easy": "Get the latitude and longitude coordinates for the Empire State Building in New York. You can use either Google Maps or Mapbox. If one service fails, switch to the other.",
-        "medium": "Get the latitude and longitude coordinates for the Empire State Building in New York. You can use either Google Maps or Mapbox.",
-        "hard": "Get the latitude and longitude coordinates for the Empire State Building in New York."
+        "easy": "Get the latitude and longitude coordinates for the SkyLabs Research Center at 1200 Innovation Drive, Boulder. You can use either Google Maps or Mapbox. If one service fails, switch to the other.",
+        "medium": "Get the latitude and longitude coordinates for the SkyLabs Research Center at 1200 Innovation Drive, Boulder. More than one server can be used to accomplish this task.",
+        "hard": "Get the latitude and longitude coordinates for the SkyLabs Research Center at 1200 Innovation Drive, Boulder."
     },
 
     "maps_places": {
-        "easy": "Search for coffee shops near Times Square in New York. You can use either Google Maps or Mapbox. If one service fails, switch to the other.",
-        "medium": "Search for coffee shops near Times Square in New York. You can use either Google Maps or Mapbox.",
-        "hard": "Search for coffee shops near Times Square in New York."
+        "easy": "Search for coffee shops near 1200 Innovation Drive, Boulder, CO. You can use either Google Maps or Mapbox. If one service fails, switch to the other.",
+        "medium": "Search for coffee shops near 1200 Innovation Drive, Boulder, CO. You have access to multiple servers that offer this capability.",
+        "hard": "Search for coffee shops near 1200 Innovation Drive, Boulder, CO."
     }
 }

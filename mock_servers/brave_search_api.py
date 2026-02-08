@@ -31,16 +31,34 @@ DEFAULT_STATE = {
             "age": "3 days ago",
         },
         {
-            "title": "W3Schools Python Tutorial",
-            "url": "https://www.w3schools.com/python",
-            "description": "Well organized and easy to understand Web building tutorials with examples.",
-            "age": "5 days ago",
+            "title": "QuantumLeaf Framework - Official Docs",
+            "url": "https://quantumleaf.dev/docs",
+            "description": "QuantumLeaf is a reactive state management framework for distributed edge computing. Getting started guide and API reference.",
+            "age": "4 days ago",
         },
         {
-            "title": "Python Package Index (PyPI)",
-            "url": "https://pypi.org",
-            "description": "The Python Package Index is a repository of software for Python.",
-            "age": "1 day ago",
+            "title": "QuantumLeaf vs Riverpod: A Comparison",
+            "url": "https://blog.devcraft.io/quantumleaf-comparison",
+            "description": "An in-depth comparison of QuantumLeaf's reactive state propagation model with traditional state management approaches.",
+            "age": "1 week ago",
+        },
+        {
+            "title": "Building microservices with QuantumLeaf 3.0",
+            "url": "https://medium.com/@techdev/quantumleaf-microservices",
+            "description": "Tutorial: How to use QuantumLeaf 3.0 for building fault-tolerant microservices with automatic state reconciliation.",
+            "age": "2 days ago",
+        },
+        {
+            "title": "Velox Dynamics - Company Profile",
+            "url": "https://veloxdynamics.com/about",
+            "description": "Velox Dynamics is a Series B startup building next-generation autonomous logistics infrastructure. Founded 2023 in Palo Alto.",
+            "age": "6 days ago",
+        },
+        {
+            "title": "Velox Dynamics Raises $47M Series B",
+            "url": "https://techcrunch.fake/velox-series-b",
+            "description": "Velox Dynamics announced a $47M Series B round led by Andreessen Horowitz to expand its autonomous freight routing platform.",
+            "age": "3 days ago",
         },
     ],
     "local_results": [
@@ -105,6 +123,11 @@ class BraveSearchAPI:
         import copy
         self.state = copy.deepcopy(DEFAULT_STATE)
         self.state.update(scenario)
+        self.state["_search_epoch"] = 0
+
+    def invalidate_transient_handles(self) -> None:
+        """Advance epoch to make previous result identifiers stale."""
+        self.state["_search_epoch"] += 1
 
     # =========================================================================
     # Tool 1: brave_web_search
@@ -134,6 +157,7 @@ class BraveSearchAPI:
         Returns:
             dict: Search results with web pages matching the query
         """
+        self.state["_search_epoch"] += 1
         # Filter results based on query (simple keyword matching for mock)
         query_lower = query.lower()
         matching_results = []
@@ -154,15 +178,17 @@ class BraveSearchAPI:
 
         return {
             "query": query,
+            "search_epoch": self.state["_search_epoch"],
             "total_results": len(matching_results),
             "results": [
                 {
+                    "result_id": f"brv_{self.state['_search_epoch']}_{i}",
                     "title": r["title"],
                     "url": r["url"],
                     "description": r["description"],
                     "age": r.get("age", "Unknown"),
                 }
-                for r in paginated
+                for i, r in enumerate(paginated)
             ],
             "freshness": freshness,
             "safe_search": safe_search,
@@ -194,6 +220,7 @@ class BraveSearchAPI:
         Returns:
             dict: Local business results with detailed information
         """
+        self.state["_search_epoch"] += 1
         query_lower = query.lower()
         matching_results = []
 
@@ -212,9 +239,11 @@ class BraveSearchAPI:
 
         return {
             "query": query,
+            "search_epoch": self.state["_search_epoch"],
             "total_results": len(matching_results),
             "results": [
                 {
+                    "result_id": f"brv_local_{self.state['_search_epoch']}_{i}",
                     "name": r["name"],
                     "address": r["address"],
                     "phone": r["phone"],
@@ -224,6 +253,6 @@ class BraveSearchAPI:
                     "hours": r["hours"],
                     "price_range": r.get("price_range", "Unknown"),
                 }
-                for r in paginated
+                for i, r in enumerate(paginated)
             ],
         }

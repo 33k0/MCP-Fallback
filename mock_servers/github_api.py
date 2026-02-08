@@ -109,6 +109,11 @@ class GitHubAPI:
         import copy
         self.state = copy.deepcopy(DEFAULT_STATE)
         self.state.update(scenario)
+        self.state.setdefault("_query_epoch", 0)
+        self.state.setdefault("_repo_generation", {})
+        self.state.setdefault("_repo_handles", {})
+        for repo in self.state["repositories"]:
+            self.state["_repo_generation"].setdefault(repo["full_name"], 1)
 
     def _find_repo(self, owner: str, repo: str) -> Optional[Dict]:
         """Find a repository by owner and name."""
@@ -116,6 +121,11 @@ class GitHubAPI:
             if r["owner"] == owner and r["name"] == repo:
                 return r
         return None
+
+    def invalidate_transient_handles(self) -> None:
+        """Invalidate volatile search handles so stale IDs cannot be reused."""
+        self.state["_query_epoch"] += 1
+        self.state["_repo_handles"] = {}
 
     # =========================================================================
     # Authentication
@@ -160,20 +170,30 @@ class GitHubAPI:
         Returns:
             dict: Search results with matching repositories
         """
+        self.state["_query_epoch"] += 1
+        self.state["_repo_handles"] = {}
         query_lower = query.lower()
         matches = []
         for repo in self.state["repositories"]:
             if (query_lower in repo["name"].lower() or
                 query_lower in repo.get("description", "").lower()):
+                handle = f"h_{self.state['_query_epoch']}_{repo['id']}"
+                self.state["_repo_handles"][handle] = {
+                    "repo": repo["full_name"],
+                    "epoch": self.state["_query_epoch"],
+                }
                 matches.append({
                     "id": repo["id"],
                     "full_name": repo["full_name"],
                     "description": repo["description"],
                     "private": repo["private"],
+                    "result_handle": handle,
+                    "repo_generation": self.state["_repo_generation"].get(repo["full_name"], 1),
                 })
 
         return {
             "total_count": len(matches),
+            "query_epoch": self.state["_query_epoch"],
             "items": matches[(page-1)*per_page : page*per_page],
         }
 
@@ -210,6 +230,7 @@ class GitHubAPI:
             "pull_requests": [],
         }
         self.state["repositories"].append(new_repo)
+        self.state["_repo_generation"][new_repo["full_name"]] = 1
         return {
             "id": new_repo["id"],
             "full_name": new_repo["full_name"],
@@ -250,6 +271,7 @@ class GitHubAPI:
             "forked_from": source["full_name"],
         }
         self.state["repositories"].append(forked)
+        self.state["_repo_generation"][forked["full_name"]] = 1
         return {
             "id": forked["id"],
             "full_name": forked["full_name"],
@@ -510,6 +532,7 @@ class GitHubAPI:
             "created_at": "2024-01-20T12:00:00Z",
         }
         repository["issues"].append(new_issue)
+        self.state["_repo_generation"][repository["full_name"]] = self.state["_repo_generation"].get(repository["full_name"], 1) + 1
 
         return {
             "number": issue_number,
@@ -710,6 +733,7 @@ class GitHubAPI:
             "comments": [],
         }
         repository["pull_requests"].append(new_pr)
+        self.state["_repo_generation"][repository["full_name"]] = self.state["_repo_generation"].get(repository["full_name"], 1) + 1
 
         return {
             "number": pr_number,

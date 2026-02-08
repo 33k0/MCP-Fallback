@@ -47,6 +47,36 @@ DEFAULT_STATE = {
             "user_ratings_total": 89,
             "opening_hours": {"open_now": True},
         },
+        {
+            "place_id": "ChIJfake_skylabs_01",
+            "name": "SkyLabs Research Center",
+            "formatted_address": "1200 Innovation Drive, Boulder, CO 80301, USA",
+            "geometry": {"lat": 40.0150, "lng": -105.2705},
+            "types": ["point_of_interest", "establishment"],
+            "rating": 4.8,
+            "user_ratings_total": 42,
+            "opening_hours": {"open_now": True},
+        },
+        {
+            "place_id": "ChIJfake_neutron_02",
+            "name": "Neutron Brewing Co",
+            "formatted_address": "47 Birchwood Lane, Amherst, MA 01002, USA",
+            "geometry": {"lat": 42.3732, "lng": -72.5199},
+            "types": ["cafe", "food", "point_of_interest"],
+            "rating": 4.3,
+            "user_ratings_total": 67,
+            "opening_hours": {"open_now": True},
+        },
+        {
+            "place_id": "ChIJfake_velox_03",
+            "name": "Velox Dynamics HQ",
+            "formatted_address": "890 Quantum Boulevard, Palo Alto, CA 94301, USA",
+            "geometry": {"lat": 37.4419, "lng": -122.1430},
+            "types": ["point_of_interest", "establishment"],
+            "rating": 4.1,
+            "user_ratings_total": 23,
+            "opening_hours": {"open_now": True},
+        },
     ],
     "addresses": {
         "1600 Amphitheatre Parkway, Mountain View, CA": {
@@ -58,6 +88,21 @@ DEFAULT_STATE = {
             "lat": -33.856784,
             "lng": 151.215297,
             "formatted_address": "Bennelong Point, Sydney NSW 2000, Australia",
+        },
+        "1200 Innovation Drive, Boulder": {
+            "lat": 40.0150,
+            "lng": -105.2705,
+            "formatted_address": "1200 Innovation Drive, Boulder, CO 80301, USA",
+        },
+        "47 Birchwood Lane, Amherst": {
+            "lat": 42.3732,
+            "lng": -72.5199,
+            "formatted_address": "47 Birchwood Lane, Amherst, MA 01002, USA",
+        },
+        "890 Quantum Boulevard, Palo Alto": {
+            "lat": 37.4419,
+            "lng": -122.1430,
+            "formatted_address": "890 Quantum Boulevard, Palo Alto, CA 94301, USA",
         },
     },
 }
@@ -94,6 +139,13 @@ class GoogleMapsAPI:
         import copy
         self.state = copy.deepcopy(DEFAULT_STATE)
         self.state.update(scenario)
+        self.state["_place_query_epoch"] = 0
+        self.state["_place_handles"] = {}
+
+    def invalidate_transient_handles(self) -> None:
+        """Invalidate volatile place handles so stale IDs must be refreshed."""
+        self.state["_place_query_epoch"] += 1
+        self.state["_place_handles"] = {}
 
     # =========================================================================
     # Tool 1: maps_geocode
@@ -227,14 +279,22 @@ class GoogleMapsAPI:
         Returns:
             dict: List of matching places
         """
+        self.state["_place_query_epoch"] += 1
+        self.state["_place_handles"] = {}
         query_lower = query.lower()
         matching_places = []
 
-        for place in self.state["places"]:
+        for idx, place in enumerate(self.state["places"]):
             if (query_lower in place["name"].lower() or
                 any(query_lower in t for t in place["types"])):
-                matching_places.append({
+                handle = f"gref_{self.state['_place_query_epoch']}_{idx}"
+                self.state["_place_handles"][handle] = {
                     "place_id": place["place_id"],
+                    "epoch": self.state["_place_query_epoch"],
+                }
+                matching_places.append({
+                    "place_id": handle,
+                    "source_place_id": place["place_id"],
                     "name": place["name"],
                     "formatted_address": place["formatted_address"],
                     "geometry": {"location": place["geometry"]},
@@ -243,17 +303,25 @@ class GoogleMapsAPI:
                 })
 
         if not matching_places:
-            matching_places = [{
-                "place_id": p["place_id"],
-                "name": p["name"],
-                "formatted_address": p["formatted_address"],
-                "geometry": {"location": p["geometry"]},
-                "rating": p.get("rating"),
-                "types": p["types"],
-            } for p in self.state["places"][:3]]
+            for idx, p in enumerate(self.state["places"][:3]):
+                handle = f"gref_{self.state['_place_query_epoch']}_{idx}"
+                self.state["_place_handles"][handle] = {
+                    "place_id": p["place_id"],
+                    "epoch": self.state["_place_query_epoch"],
+                }
+                matching_places.append({
+                    "place_id": handle,
+                    "source_place_id": p["place_id"],
+                    "name": p["name"],
+                    "formatted_address": p["formatted_address"],
+                    "geometry": {"location": p["geometry"]},
+                    "rating": p.get("rating"),
+                    "types": p["types"],
+                })
 
         return {
             "status": "OK",
+            "query_epoch": self.state["_place_query_epoch"],
             "results": matching_places,
         }
 
@@ -277,8 +345,15 @@ class GoogleMapsAPI:
         Returns:
             dict: Detailed place information
         """
+        resolved = place_id
+        if place_id in self.state["_place_handles"]:
+            token = self.state["_place_handles"][place_id]
+            if token["epoch"] != self.state["_place_query_epoch"]:
+                return {"status": "STALE_REFERENCE", "error": "Place handle is stale. Re-run place search."}
+            resolved = token["place_id"]
+
         for place in self.state["places"]:
-            if place["place_id"] == place_id:
+            if place["place_id"] == resolved:
                 return {
                     "status": "OK",
                     "result": {
